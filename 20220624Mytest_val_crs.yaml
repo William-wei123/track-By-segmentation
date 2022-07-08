@@ -1,0 +1,47 @@
+#'''
+#使用sbd_snake 训练coco数据集
+#task不可改，heads的key不可改，键值可以改，听说有几个类别，ct_hm就改成几
+#model，改成自己的，会对应生成一个文件夹
+#效果非常差,找到问题，似乎是数据集格式转coco时，图片顺序乱了，所以shipone_seg1，shipone_seg2无法训练成功
+#还是不行，是不是图片太大了，所以他识别不出来？他原函数有所设置最大检测物的大小  shipone_seg3无法训练成功
+#shipone_seg5有些许效果，但有不想要的sea 被识别出来了，而且分割效果不是特别好
+#shipone_seg6有些许效果，sea 已经删除了，7打算在6的基础上接着(140)训练一下自己标的数据集（My_data_ship_Train2），而且分割效果不是特别好
+#shipone_seg7 8 和6差不多
+#shipone_seg9 开始训练大数据集但有bug
+#shipone_seg10   修改过图片大小和标注信息的训练集训练  My_data_ship_Train   My_data_ship_test
+#shipone_seg_row  My_data_ship_Train_row  My_data_ship_test_row   原始大小的图片
+#439次数效果都还可以，效果已备份，开始训练840次，看一下效果有没有改善
+#shipone_seg_11  大船轮廓回归效果不好，现在改变轮廓回归的次数2->3(evolve.py),并且把最终的点变成192(snake_config)，暂时看一下效果  My_data_ship_Train   My_data_ship_test
+
+#画轨迹，先确定每只船的ID ，如果漏检太多，ID就是假的，所以还是得解决漏检和错检的问题
+#'''
+
+
+#加载模型
+model: 'shipone_seg_11'
+network: 'ro_34'
+#会选择data/model/cfg.task下面的文件夹和加载lib/networks/cfg.task/init.py
+task: 'snake'
+resume: true
+gpus: (0, 1, 2, 3)
+
+#det_model: 'shipone_ct'
+
+train:
+    optim: 'adam'
+    lr: 1e-4
+    milestones: (80, 120, 150)
+    gamma: 0.5
+    batch_size: 16
+    dataset: 'My_data_ship_Train'
+    num_workers: 32
+    epoch: 480
+test:
+    dataset: 'My_data_ship_test'
+    batch_size: 1
+
+heads: {'ct_hm': 1, 'wh': 2}
+segm_or_bbox: 'segm'
+ct_score: 0.03
+save_ep: 10
+cfg.eval_ep: 2
